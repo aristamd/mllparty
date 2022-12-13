@@ -8,7 +8,8 @@
 import Config
 
 config :mllparty,
-  namespace: MLLParty
+  namespace: MLLParty,
+  api_key: "sekret"
 
 # Configures the endpoint
 config :mllparty, MLLPartyWeb.Endpoint,

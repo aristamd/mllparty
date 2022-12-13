@@ -1,10 +1,32 @@
 # MLLParty
 
-Generated with:
+## Description
 
+Small service that converts HTTP requests to MLLP messages.
+
+## Quick Start
+
+Send an HL7 message via MLLP with:
+
+```bash
+# Start mllp-catcher and http-debugger services
+docker compose up -d
+
+# Install dependencies
+mix deps.get
+
+# Send a message from command line
+mix send_mllp mllp://0.0.0.0:2595 "<your HL7 message, or leave blank to send test message>"
+
+# You should now see the message in the logs of the mllp-catcher and http-debugger... You'll see an invalid_ack_message output in the console because our test endpoint isn't returning an ACK like a real system will.
 ```
-mix phx.new mllparty --module MLLParty --no-mailer --no-ecto --no-html --no-assets
-```
+
+## Pre-Requisites
+
+You'll need:
+- An endpoint listening for MLLP messages (see below for setting up a simple)
+
+## Usage
 
 To start your Phoenix server:
 

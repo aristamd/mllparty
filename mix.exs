@@ -34,11 +34,13 @@ defmodule MLLParty.MixProject do
     [
       {:phoenix, "~> 1.7.0-rc.0", override: true},
       {:phoenix_live_dashboard, "~> 0.7.2"},
+      {:telemetry, "~> 1.1", override: true},
       {:telemetry_metrics, "~> 0.6"},
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 0.20"},
       {:jason, "~> 1.2"},
-      {:plug_cowboy, "~> 2.5"}
+      {:plug_cowboy, "~> 2.5"},
+      {:mllp, "~> 0.8.4"}
     ]
   end
 

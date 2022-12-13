@@ -3,10 +3,15 @@ defmodule MLLPartyWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+
+    plug MLLPartyWeb.Plug.APIKeyBasicAuth,
+      api_key: {Application, :fetch_env!, [:mllparty, :api_key]}
   end
 
   scope "/api", MLLPartyWeb do
     pipe_through :api
+
+    post "/mllp_messages", MLLPMessageController, :send
   end
 
   # Enable LiveDashboard in development
