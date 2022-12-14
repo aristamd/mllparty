@@ -33,6 +33,9 @@ if config_env() == :prod do
       You can generate one by calling: mix phx.gen.secret
       """
 
+  api_key = System.get_env("API_KEY") || raise "environment variable API_KEY is missing."
+  config :mllparty, api_key: api_key
+
   host = System.get_env("PHX_HOST") || "example.com"
   port = String.to_integer(System.get_env("PORT") || "4000")
 

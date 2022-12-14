@@ -29,6 +29,9 @@ defmodule MLLPartyWeb.Endpoint do
     plug Phoenix.CodeReloader
   end
 
+  plug MLLPartyWeb.Plug.Heartbeat, path: "/healthz"
+  plug MLLPartyWeb.Plug.Heartbeat, path: "/readyz"
+
   plug Phoenix.LiveDashboard.RequestLogger,
     param_key: "request_logger",
     cookie_key: "request_logger"
