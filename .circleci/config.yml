@@ -1,0 +1,105 @@
+version: 2.1
+
+workflows:
+  version: 2
+  test_and_push_image:
+    jobs:
+      - test
+      - build_image:
+          filters:
+            branches:
+              only:
+                - main
+      - push_image_to_registry:
+          requires:
+            - test
+            - build_image
+          filters:
+            branches:
+              only:
+                - main
+
+jobs:
+  test:
+    docker:
+      - image: "cimg/elixir:1.14.2"
+        environment:
+          MIX_ENV: test
+
+    working_directory: ~/app
+
+    steps:
+      - checkout
+      - run: mix local.hex --force
+      - run: mix local.rebar --force
+
+      - restore_cache:
+          keys:
+            - v1-mix-cache-{{ .Branch }}-{{ checksum "mix.lock" }}
+            - v1-mix-cache-{{ .Branch }}
+            - v1-mix-cache
+      - restore_cache:
+          keys:
+            - v1-build-cache-{{ .Branch }}
+            - v1-build-cache
+
+      - run: mix do deps.get, compile
+      - save_cache:
+          key: v1-mix-cache-{{ .Branch }}-{{ checksum "mix.lock" }}
+          paths:
+            - "deps"
+      - save_cache:
+          key: v1-build-cache-{{ .Branch }}
+          paths:
+            - "_build"
+
+      - run: mix test
+
+      - store_test_results:
+          path: _build/test/junit
+
+      # Cache all the project files to re-use in the deploy job (instead of pulling the repo again)
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+
+  build_image:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - restore_cache:
+          keys:
+              - v1-{{ .Branch }}
+      - run:
+          name: Load Docker image layer cache
+          command: |
+            set +o pipefail
+            docker load -i ~/.cache/mllparty.tar | true
+      - run:
+          name: Build application Docker image
+          command: |
+            export DOCKER_BUILDKIT=1
+            docker build --cache-from=mllparty -t mllparty --build-arg BUILD_SHA=${CIRCLE_SHA1} .
+      - run:
+          name: Save Docker image layer cache
+          command: |
+            mkdir -p ~/.cache
+            docker save -o ~/.cache/mllparty.tar mllparty
+      - save_cache:
+          key: v1-{{ .Branch }}-{{ epoch }}
+          paths:
+            - ~/.cache/mllparty.tar
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - ".cache/mllparty.tar"
+
+  push_image_to_registry:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run: echo "...push image to registry"
