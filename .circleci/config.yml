@@ -18,6 +18,8 @@ workflows:
             branches:
               only:
                 - main
+          context:
+            - dockerhub-pusher
 
 jobs:
   test:
@@ -101,5 +103,19 @@ jobs:
   push_image_to_registry:
     docker:
       - image: cimg/base:stable
+        environment:
+          IMAGE_NAME: mllparty
     steps:
-      - run: echo "...push image to registry"
+      # Attach previously cached workspace
+      - attach_workspace:
+          at: .
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run: docker load --input .cache/${IMAGE_NAME}.tar
+      - run: docker tag mllparty ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${CIRCLE_SHA1}
+      - run: docker tag mllparty ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
+      - run:
+          name: Publish Docker Image to Docker Hub
+          command: |
+            echo "$DOCKERHUB_ACCESS_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
