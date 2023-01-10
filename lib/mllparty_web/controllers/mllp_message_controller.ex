@@ -29,9 +29,26 @@ defmodule MLLPartyWeb.MLLPMessageController do
           Logger.info("Message sent successfully to #{ip}:#{port}")
           json(conn, %{sent: true})
 
-        {:ok, _application_resp_type, _ack} ->
+        {:ok, _application_resp_type,
+         %MLLP.Ack{
+           acknowledgement_code: ack_code,
+           text_message: text_message,
+           hl7_ack_message: hl7_ack_message
+         }} ->
           Logger.info("Message sent successfully to #{ip}:#{port}")
-          json(conn, %{sent: true})
+
+          hl7_resp =
+            case hl7_ack_message do
+              nil -> nil
+              %HL7.Message{} -> to_string(hl7_ack_message)
+            end
+
+          json(conn, %{
+            sent: true,
+            acknowledgement_code: ack_code,
+            text_message: text_message,
+            hl7_ack_message: hl7_resp
+          })
 
         {:error, %MLLP.Client.Error{reason: :econnrefused, message: message}} ->
           Logger.error("Failed to send: #{message}")

@@ -135,7 +135,12 @@ defmodule MLLPartyWeb.MLLPMessageControllerTest do
         |> post(@api_endpoint, params)
         |> json_response(200)
 
-      assert resp == %{"sent" => true}
+      assert resp == %{
+               "sent" => true,
+               "acknowledgement_code" => "AA",
+               "hl7_ack_message" => nil,
+               "text_message" => "A real MLLP message dispatcher was not provided"
+             }
 
       MLLP.Receiver.stop(6090)
     end
