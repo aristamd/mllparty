@@ -12,6 +12,8 @@ defmodule MLLParty.Application do
       MLLPartyWeb.Telemetry,
       # Start the PubSub system
       {Phoenix.PubSub, name: MLLParty.PubSub},
+      # Start the ConnectionHub
+      MLLParty.ConnectionHub,
       # Start the Endpoint (http/https)
       MLLPartyWeb.Endpoint
       # Start a worker by calling: MLLParty.Worker.start_link(arg)

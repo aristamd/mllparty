@@ -11,6 +11,7 @@ defmodule MLLPartyWeb.Router do
   scope "/api", MLLPartyWeb do
     pipe_through :api
 
+    get "/connections", ConnectionController, :list
     post "/mllp_messages", MLLPMessageController, :send
   end
 

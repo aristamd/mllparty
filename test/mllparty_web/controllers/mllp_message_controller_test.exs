@@ -14,9 +14,14 @@ defmodule MLLPartyWeb.MLLPMessageControllerTest do
       original_api_key = Application.get_env(:mllparty, :api_key)
       Application.put_env(:mllparty, :api_key, @api_key)
 
+      authd_conn = build_conn() |> basic_auth("", @api_key)
+
       on_exit(fn ->
+        MLLParty.ConnectionHub.reset()
         Application.put_env(:mllparty, :api_key, original_api_key)
       end)
+
+      {:ok, %{conn: authd_conn}}
     end
 
     test "with missing API key" do
@@ -38,37 +43,34 @@ defmodule MLLPartyWeb.MLLPMessageControllerTest do
       assert resp == %{"message" => "Invalid API key"}
     end
 
-    test "with missing `endpoint` param" do
+    test "with missing `endpoint` param", %{conn: conn} do
       params = %{message: "some|hl7"}
 
       resp =
-        build_conn()
-        |> basic_auth("", @api_key)
+        conn
         |> post(@api_endpoint, params)
         |> json_response(400)
 
       assert resp == %{"message" => "Missing params: endpoint"}
     end
 
-    test "with missing `message` param" do
+    test "with missing `message` param", %{conn: conn} do
       params = %{endpoint: "127.0.0.1:2575"}
 
       resp =
-        build_conn()
-        |> basic_auth("", @api_key)
+        conn
         |> post(@api_endpoint, params)
         |> json_response(400)
 
       assert resp == %{"message" => "Missing params: message"}
     end
 
-    test "with invalid `endpoint` param" do
+    test "with invalid `endpoint` param", %{conn: conn} do
       for endpoint <- ["invalid.com", "127.0.0.1", ":3000"] do
         params = %{endpoint: endpoint, message: @valid_hl7}
 
         resp =
-          build_conn()
-          |> basic_auth("", @api_key)
+          conn
           |> post(@api_endpoint, params)
           |> json_response(400)
 
@@ -76,12 +78,11 @@ defmodule MLLPartyWeb.MLLPMessageControllerTest do
       end
     end
 
-    test "with invalid hl7 in `message` param" do
+    test "with invalid hl7 in `message` param", %{conn: conn} do
       params = %{endpoint: "127.0.0.1:2575", message: "some|invalid|hl7"}
 
       resp =
-        build_conn()
-        |> basic_auth("", @api_key)
+        conn
         |> post(@api_endpoint, params)
         |> json_response(400)
 
@@ -90,7 +91,7 @@ defmodule MLLPartyWeb.MLLPMessageControllerTest do
              }
     end
 
-    test "sending just to log" do
+    test "sending just to log", %{conn: conn} do
       original_log_level = Application.get_env(:logger, :level)
       Application.put_env(:logger, :level, :info)
 
@@ -98,8 +99,7 @@ defmodule MLLPartyWeb.MLLPMessageControllerTest do
         params = %{endpoint: "log", message: @valid_hl7}
 
         resp =
-          build_conn()
-          |> basic_auth("", @api_key)
+          conn
           |> post(@api_endpoint, params)
           |> json_response(200)
 
@@ -112,26 +112,24 @@ defmodule MLLPartyWeb.MLLPMessageControllerTest do
       Application.put_env(:logger, :level, original_log_level)
     end
 
-    test "sending valid HL7 to a non-listening mllp endpoint" do
+    test "sending valid HL7 to a non-listening mllp endpoint", %{conn: conn} do
       params = %{endpoint: "127.0.0.1:6090", message: @valid_hl7}
 
       resp =
-        build_conn()
-        |> basic_auth("", @api_key)
+        conn
         |> post(@api_endpoint, params)
         |> json_response(502)
 
       assert resp == %{"sent" => false, "message" => "connection refused"}
     end
 
-    test "sending valid HL7 to a listening mllp endpoint" do
+    test "sending valid HL7 to a listening mllp endpoint", %{conn: conn} do
       {:ok, _r6090} = MLLP.Receiver.start(port: 6090, dispatcher: MLLP.EchoDispatcher)
 
       params = %{endpoint: "127.0.0.1:6090", message: @valid_hl7}
 
       resp =
-        build_conn()
-        |> basic_auth("", @api_key)
+        conn
         |> post(@api_endpoint, params)
         |> json_response(200)
 

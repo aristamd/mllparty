@@ -20,8 +20,9 @@ defmodule Mix.Tasks.SendMllp do
     port = String.to_integer(port)
     message = HL7.Message.new(message)
 
-    {:ok, s1} = MLLP.Client.start_link(ip, port)
-    resp = MLLP.Client.send(s1, message)
+    # Send message to the endpoint
+    resp =
+      MLLParty.ConnectionHub.send_message(ip, port, message, wait_for_client_to_connect: true)
 
     Mix.shell().info(inspect(resp))
   end

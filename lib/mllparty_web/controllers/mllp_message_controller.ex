@@ -22,9 +22,13 @@ defmodule MLLPartyWeb.MLLPMessageController do
   def send(conn, %{"endpoint" => endpoint, "message" => message}) do
     with {:ok, {ip, port}} <- validate_endpoint(endpoint),
          %HL7.Message{} = hl7_message <- HL7.Message.new(message) do
-      {:ok, pid} = MLLP.Client.start_link(ip, port)
+      # Send message to the endpoint
+      resp =
+        MLLParty.ConnectionHub.send_message(ip, port, hl7_message,
+          wait_for_client_to_connect: true
+        )
 
-      case MLLP.Client.send(pid, hl7_message) do
+      case resp do
         {:ok, _} ->
           Logger.info("Message sent successfully to #{ip}:#{port}")
           json(conn, %{sent: true})

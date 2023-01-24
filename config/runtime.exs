@@ -51,6 +51,16 @@ if config_env() == :prod do
     ],
     secret_key_base: secret_key_base
 
+  boot_connections =
+    System.get_env("BOOT_CONNECTIONS", "")
+    |> String.split(",")
+    |> Enum.map(fn ip_port ->
+      [ip, port] = String.split(ip_port, ":")
+      {ip, String.to_integer(port)}
+    end)
+
+  config :mllparty, boot_connections: boot_connections
+
   # ## SSL Support
   #
   # To get SSL working, you will need to add the `https` key
