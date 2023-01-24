@@ -19,28 +19,14 @@ defmodule MLLPartyWeb.MLLPMessageController do
     end
   end
 
-  # Map of persistent connections (endpoint => client pid)
-  # Example { "127.0.0.1:3000" => #PID<1>, "127.0.0.1:4000" => #PID<2> }
-  @connections %{}
-
   def send(conn, %{"endpoint" => endpoint, "message" => message}) do
     with {:ok, {ip, port}} <- validate_endpoint(endpoint),
          %HL7.Message{} = hl7_message <- HL7.Message.new(message) do
-
-      # Check for an existing client for this endpoint
-      if Map.has_key?(@connections, endpoint) do
-        # Reconnect to the endpoint, if needed
-        unless MLLP.Client.is_connected?(@connections[endpoint]) do
-          MLLP.Client.reconnect(@connections[endpoint])
-        end
-      else
-        # Make a new connection
-        {:ok, client_pid} = MLLP.Client.start_link(ip, port)
-        @connections = Map.put(@connections, endpoint, client_pid)
-      end
-
       # Send message to the endpoint
-      resp = MLLP.Client.send(@connections[endpoint], hl7_message)
+      resp =
+        MLLParty.ConnectionHub.send_message(ip, port, hl7_message,
+          wait_for_client_to_connect: true
+        )
 
       case resp do
         {:ok, _} ->

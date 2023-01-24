@@ -66,6 +66,26 @@ docker build . -t mllparty
 docker run --rm --env API_KEY="sekret" --env SECRET_KEY_BASE="$(mix phx.gen.secret)" -p 4000:4000 mllparty
 ```
 
+### Persistent Connections
+
+MLLP client connections will attempt to stay alive and connected, not just during the HTTP request lifecycle.
+
+If there's no client connection for the IP/Port specified in a given HTTP API request, a client connection process will be started for that endpoint.
+
+Additionally, you can start some persistent client connections on boot with the `BOOT_CONNECTIONS` env variable.
+
+**Example:**
+```
+docker run --rm --env BOOT_CONNECTIONS="127.0.0.1:6090,127.0.0.1:6091" -p 4000:4000 mllparty
+```
+
+To query for current connections:
+```
+curl http://localhost:4000/api/connections \
+    -u ":sekret" \
+    -H "Content-Type: application/json"
+```
+
 
 ### Mix Task
 

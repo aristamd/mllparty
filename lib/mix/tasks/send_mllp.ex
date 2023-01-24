@@ -15,29 +15,14 @@ defmodule Mix.Tasks.SendMllp do
     run(["mllp://" <> endpoint, HL7.Examples.wikipedia_sample_hl7()])
   end
 
-  # Map of persistent connections (endpoint => client pid)
-  # Example { "127.0.0.1:3000" => #PID<1>, "127.0.0.1:4000" => #PID<2> }
-  @connections %{}
-
   def run(["mllp://" <> endpoint, message]) do
     [ip, port] = String.split(endpoint, ":")
     port = String.to_integer(port)
     message = HL7.Message.new(message)
 
-    # Check for an existing client for this endpoint
-    if Map.has_key?(@connections, endpoint) do
-      # Reconnect to the endpoint, if needed
-      unless MLLP.Client.is_connected?(@connections[endpoint]) do
-        MLLP.Client.reconnect(@connections[endpoint])
-      end
-    else
-      # Make a new connection
-      {:ok, client_pid} = MLLP.Client.start_link(ip, port)
-      @connections = Map.put(@connections, endpoint, client_pid)
-    end
-
     # Send message to the endpoint
-    resp = MLLP.Client.send(@connections[endpoint], message)
+    resp =
+      MLLParty.ConnectionHub.send_message(ip, port, message, wait_for_client_to_connect: true)
 
     Mix.shell().info(inspect(resp))
   end
