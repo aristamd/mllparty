@@ -66,7 +66,7 @@ defmodule MLLParty.ConnectionHub do
       wait_for_client_to_connect(pid)
     end
 
-    Logger.debug("Sending message to client #{ip}:#{port}: #{inspect(message)}")
+    Logger.debug("[sender] Sending message to client #{ip}:#{port}: #{inspect(message)}")
     ClientWrapper.send_message(pid, message)
   end
 
@@ -95,8 +95,6 @@ defmodule MLLParty.ConnectionHub do
   Starts a client connection process to the given `ip` and `port`.
   """
   def start_client(ip, port) do
-    Logger.info("Starting client connection: #{ip}:#{port}")
-
     DynamicSupervisor.start_child(
       MLLPClientSupervisor,
       MLLParty.ConnectionHub.ClientWrapper.child_spec(ip, port)
@@ -157,7 +155,7 @@ defmodule MLLParty.ConnectionHub do
         :timeout
 
       true ->
-        Logger.info("Waiting for client to connect: #{endpoint}")
+        Logger.info("[sender] Waiting for client to connect: #{endpoint}")
         Process.sleep(sleep_interval_ms)
 
         wait_for_client_to_connect(
