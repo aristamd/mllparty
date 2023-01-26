@@ -31,9 +31,13 @@ defmodule MLLParty.ConnectionHub.ClientWrapper do
     children = [
       %{
         id: "#{ip}:#{port}",
-        start: {MLLP.Client, :start_link, [ip, port]}
+        start:
+          {MLLP.Client, :start_link,
+           [ip, port, [use_backoff: false, auto_reconnect_interval: 1000]]}
       }
     ]
+
+    Logger.info("Starting client connection: #{ip}:#{port}")
 
     Supervisor.init(children, strategy: :one_for_one)
   end

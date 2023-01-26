@@ -30,7 +30,7 @@ defmodule MLLPartyWeb.MLLPMessageController do
 
       case resp do
         {:ok, _} ->
-          Logger.info("Message sent successfully to #{ip}:#{port}")
+          Logger.info("[sender] Message sent successfully to #{ip}:#{port}")
           json(conn, %{sent: true})
 
         {:ok, _application_resp_type,
@@ -39,7 +39,7 @@ defmodule MLLPartyWeb.MLLPMessageController do
            text_message: text_message,
            hl7_ack_message: hl7_ack_message
          }} ->
-          Logger.info("Message sent successfully to #{ip}:#{port}")
+          Logger.info("[sender] Message sent successfully to #{ip}:#{port}")
 
           hl7_resp =
             case hl7_ack_message do
@@ -55,21 +55,24 @@ defmodule MLLPartyWeb.MLLPMessageController do
           })
 
         {:error, %MLLP.Client.Error{reason: :econnrefused, message: message}} ->
-          Logger.error("Failed to send: #{message}")
+          Logger.error("[sender] Failed to send: #{message}")
 
           conn
           |> put_status(:bad_gateway)
           |> json(%{sent: false, message: message})
 
         {:error, %MLLP.Client.Error{reason: reason}} ->
-          Logger.error("Failed to send: #{reason}")
+          Logger.error("[sender] Failed to send: #{reason}")
 
           conn
           |> put_status(:internal_server_error)
           |> json(%{sent: false, message: reason})
 
         {:error, error_type, error_message} ->
-          Logger.error("Failed to send: #{inspect(error_type)} - #{inspect(error_message)}")
+          Logger.error(
+            "[sender] Failed to send: #{inspect(error_type)} - #{inspect(error_message)}"
+          )
+
           json(conn, %{sent: false})
       end
     else

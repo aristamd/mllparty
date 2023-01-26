@@ -7,6 +7,15 @@ defmodule MLLParty.Application do
 
   @impl true
   def start(_type, _args) do
+    :ok =
+      :telemetry.attach(
+        # unique handler id
+        "log-client-status-handler",
+        [:mllp, :client, :status],
+        &LogClientStatusHandler.handle_event/4,
+        nil
+      )
+
     children = [
       # Start the Telemetry supervisor
       MLLPartyWeb.Telemetry,
