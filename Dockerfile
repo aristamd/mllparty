@@ -80,22 +80,16 @@ ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
 WORKDIR "/app"
-RUN chown nobody /app
+# RUN chown nobody /app
 
 # set runner ENV
 ENV MIX_ENV="prod"
 
 # Only copy the final release from the build stage
-COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/mllparty ./
-
-# Create a directory for the Doppler config
-RUN mkdir -p /etc/doppler && chown nobody:nogroup /etc/doppler
+COPY --from=builder /app/_build/${MIX_ENV}/rel/mllparty ./
 
 # Switch to the nobody user
-USER nobody
-
-# Set the 'DOPPLER_CONFIG' environment variable to the new location
-ENV DOPPLER_CONFIG=/etc/doppler
+# USER nobody
 
 ENTRYPOINT [ "doppler", "run", "--" ]
 CMD ["/app/bin/server"]
