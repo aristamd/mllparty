@@ -88,7 +88,14 @@ ENV MIX_ENV="prod"
 # Only copy the final release from the build stage
 COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/mllparty ./
 
+# Create a directory for the Doppler config
+RUN mkdir -p /etc/doppler && chown nobody:nogroup /etc/doppler
+
+# Switch to the nobody user
 USER nobody
+
+# Set the 'DOPPLER_CONFIG' environment variable to the new location
+ENV DOPPLER_CONFIG=/etc/doppler
 
 ENTRYPOINT [ "doppler", "run", "--" ]
 CMD ["/app/bin/server"]
