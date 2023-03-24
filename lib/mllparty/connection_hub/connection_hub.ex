@@ -26,6 +26,7 @@ defmodule MLLParty.ConnectionHub do
 
   require Logger
 
+  alias MLLParty.ConnectionHub.ClientMonitor
   alias MLLParty.ConnectionHub.ClientWrapper
 
   @default_connection_wait_time Application.compile_env(
@@ -53,17 +54,18 @@ defmodule MLLParty.ConnectionHub do
   Sends a message to the client connection process for the given `ip` and `port`.
   """
   def send_message(ip, port, message, opts \\ []) do
-    pid =
+    {pid, is_new_connection} =
       case start_client(ip, port) do
         {:ok, pid} ->
-          pid
+          {pid, true}
 
         {:error, {:already_started, pid}} ->
-          pid
+          {pid, false}
       end
 
-    if opts[:wait_for_client_to_connect] do
-      wait_for_client_to_connect(pid)
+    wait_for_client_to_connect(pid)
+    if is_new_connection do
+      ClientMonitor.start_monitor(pid)
     end
 
     Logger.debug("[sender] Sending message to client #{ip}:#{port}: #{inspect(message)}")
@@ -81,7 +83,8 @@ defmodule MLLParty.ConnectionHub do
           endpoint: "127.0.0.1:6090",
           ip: "127.0.0.1",
           port: "6090",
-          connected: true
+          connected: true,
+          pending_reconnect: false
         }
       ]
   """
@@ -136,7 +139,9 @@ defmodule MLLParty.ConnectionHub do
     Logger.info("Starting boot client connections: #{inspect(boot_clients)}")
 
     for {ip, port} <- boot_clients do
-      start_client(ip, port)
+      {reply, pid} = start_client(ip, port)
+      wait_for_client_to_connect(pid)
+      ClientMonitor.start_monitor(pid)
     end
   end
 

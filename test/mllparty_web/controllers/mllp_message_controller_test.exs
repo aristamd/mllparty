@@ -87,7 +87,7 @@ defmodule MLLPartyWeb.MLLPMessageControllerTest do
         |> json_response(400)
 
       assert resp == %{
-               "message" => "Invalid HL7 in `message` param. Reason: missing_header_or_encoding"
+               "message" => "Invalid HL7 in `message` param. Reason: missing_header"
              }
     end
 

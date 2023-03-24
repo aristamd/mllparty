@@ -24,9 +24,7 @@ defmodule MLLPartyWeb.MLLPMessageController do
          %HL7.Message{} = hl7_message <- HL7.Message.new(message) do
       # Send message to the endpoint
       resp =
-        MLLParty.ConnectionHub.send_message(ip, port, hl7_message,
-          wait_for_client_to_connect: true
-        )
+        MLLParty.ConnectionHub.send_message(ip, port, hl7_message)
 
       case resp do
         {:ok, _} ->

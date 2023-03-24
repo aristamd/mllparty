@@ -62,7 +62,8 @@ defmodule MLLParty.ConnectionHub.ClientWrapper do
       endpoint: endpoint,
       ip: ip,
       port: String.to_integer(port),
-      connected: MLLP.Client.is_connected?(client_pid)
+      connected: MLLP.Client.is_connected?(client_pid),
+      pending_reconnect: MLLP.Client.is_pending_reconnect?(client_pid),
     }
   end
 
@@ -70,7 +71,7 @@ defmodule MLLParty.ConnectionHub.ClientWrapper do
     {:via, Registry, {MLLParty.ConnectionHub.ClientRegistry, "#{ip}:#{port}"}}
   end
 
-  defp child_client_pid(client_wrapper_pid) do
+  def child_client_pid(client_wrapper_pid) do
     # A little bit of magic here. We're using the `which_children`
     # function to get the PID of the `MLLP.Client` process that
     # is being supervised by this `ClientWrapper` process.
