@@ -34,11 +34,14 @@ defmodule MLLParty.ConnectionHub.ClientWrapper do
         start:
           {MLLP.Client, :start_link,
            [ip, port, [use_backoff: false, auto_reconnect_interval: 1000]]}
+      },
+      %{
+        id: "#{ip}:#{port} monitor",
+        start: {MLLParty.ConnectionHub.ClientMonitor, :start_link, [ip, port, self()]}
       }
     ]
 
     Logger.info("Starting client connection: #{ip}:#{port}")
-
     Supervisor.init(children, strategy: :one_for_one)
   end
 
@@ -55,16 +58,34 @@ defmodule MLLParty.ConnectionHub.ClientWrapper do
   def client_status(wrapper_pid) do
     # NB: This is relying on the fact that the `MLLP.Client` process id
     #     defined in child_spec is the same as the endpoint string.
-    [{endpoint, client_pid, _, [MLLP.Client]}] = Supervisor.which_children(wrapper_pid)
+    {endpoint, client_pid, _, [MLLP.Client]} = mllp_client_process(wrapper_pid)
     [ip, port] = String.split(endpoint, ":")
 
     %{
       endpoint: endpoint,
       ip: ip,
       port: String.to_integer(port),
-      connected: MLLP.Client.is_connected?(client_pid),
-      pending_reconnect: MLLP.Client.is_pending_reconnect?(client_pid),
+      connected: is_connected?(client_pid),
+      pending_reconnect: is_pending_reconnect?(client_pid),
     }
+  end
+
+  def is_connected?(client_pid) do
+    try do
+      MLLP.Client.is_connected?(client_pid) && not MLLP.Client.is_closed?(client_pid)
+    catch
+      :exit, {reason, _} ->
+        {:unavailable, reason}
+    end
+  end
+
+  def is_pending_reconnect?(client_pid) do
+    try do
+      MLLP.Client.is_pending_reconnect?(client_pid)
+    catch
+      :exit, {reason, _} ->
+        {:unavailable, reason}
+    end
   end
 
   def process_name(ip, port) do
@@ -75,7 +96,16 @@ defmodule MLLParty.ConnectionHub.ClientWrapper do
     # A little bit of magic here. We're using the `which_children`
     # function to get the PID of the `MLLP.Client` process that
     # is being supervised by this `ClientWrapper` process.
-    [{_name, mllp_client_pid, :worker, _module}] = Supervisor.which_children(client_wrapper_pid)
+    {_name, mllp_client_pid, :worker, _module} = mllp_client_process(client_wrapper_pid)
     mllp_client_pid
+  end
+
+  defp mllp_client_process(client_wrapper_pid) do
+    Supervisor.which_children(client_wrapper_pid)
+                             |> Enum.find_value(fn
+      {endpoint, client_pid, :worker, [MLLP.Client]} ->
+        {endpoint, client_pid, :worker, [MLLP.Client]}
+      _ -> nil
+    end)
   end
 end

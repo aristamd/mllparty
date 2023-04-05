@@ -40,7 +40,7 @@ defmodule MLLParty.MixProject do
       {:gettext, "~> 0.20"},
       {:jason, "~> 1.2"},
       {:plug_cowboy, "~> 2.5"},
-      {:mllp, git: "https://github.com/aristamd/elixir-mllp.git", ref: "efda78f2a9173637ce707748107cdd751f4a8a99"},
+      {:mllp, git: "https://github.com/aristamd/elixir-mllp.git", ref: "ea79da33a02dc01146f66d4041b45bbd20a66fb7"},
       {:httpoison, "~> 2.0"}
     ]
   end

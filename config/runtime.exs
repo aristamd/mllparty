@@ -39,6 +39,9 @@ if config_env() == :prod do
   slack_webhook_url = System.get_env("SLACK_WEBHOOK_URL")
   config :mllparty, slack_webhook_url: slack_webhook_url
 
+  slack_channel = System.get_env("SLACK_CHANNEL")
+  config :mllparty, slack_channel: slack_channel
+
   host = System.get_env("PHX_HOST") || "example.com"
   port = String.to_integer(System.get_env("PORT") || "4000")
 
