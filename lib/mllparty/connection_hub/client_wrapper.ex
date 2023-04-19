@@ -66,7 +66,7 @@ defmodule MLLParty.ConnectionHub.ClientWrapper do
       ip: ip,
       port: String.to_integer(port),
       connected: is_connected?(client_pid),
-      pending_reconnect: is_pending_reconnect?(client_pid),
+      pending_reconnect: is_pending_reconnect?(client_pid)
     }
   end
 
@@ -102,10 +102,12 @@ defmodule MLLParty.ConnectionHub.ClientWrapper do
 
   defp mllp_client_process(client_wrapper_pid) do
     Supervisor.which_children(client_wrapper_pid)
-                             |> Enum.find_value(fn
+    |> Enum.find_value(fn
       {endpoint, client_pid, :worker, [MLLP.Client]} ->
         {endpoint, client_pid, :worker, [MLLP.Client]}
-      _ -> nil
+
+      _ ->
+        nil
     end)
   end
 end
