@@ -7,6 +7,7 @@ defmodule MLLParty.Application do
 
   @impl true
   def start(_type, _args) do
+    Logger.add_backend(Sentry.LoggerBackend)
     :ok =
       :telemetry.attach(
         # unique handler id
