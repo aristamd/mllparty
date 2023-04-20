@@ -62,9 +62,7 @@ defmodule MLLParty.ConnectionHub do
           pid
       end
 
-    if opts[:wait_for_client_to_connect] do
-      wait_for_client_to_connect(pid)
-    end
+    wait_for_client_to_connect(pid)
 
     Logger.debug("[sender] Sending message to client #{ip}:#{port}: #{inspect(message)}")
     ClientWrapper.send_message(pid, message)
@@ -81,7 +79,8 @@ defmodule MLLParty.ConnectionHub do
           endpoint: "127.0.0.1:6090",
           ip: "127.0.0.1",
           port: "6090",
-          connected: true
+          connected: true,
+          pending_reconnect: false
         }
       ]
   """
@@ -136,7 +135,8 @@ defmodule MLLParty.ConnectionHub do
     Logger.info("Starting boot client connections: #{inspect(boot_clients)}")
 
     for {ip, port} <- boot_clients do
-      start_client(ip, port)
+      {reply, pid} = start_client(ip, port)
+      wait_for_client_to_connect(pid)
     end
   end
 
@@ -148,7 +148,7 @@ defmodule MLLParty.ConnectionHub do
     %{endpoint: endpoint, connected: connected} = ClientWrapper.client_status(client_wrapper_pid)
 
     cond do
-      connected ->
+      connected == true ->
         :ok
 
       wait_ms <= 0 ->

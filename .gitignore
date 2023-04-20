@@ -23,3 +23,5 @@ erl_crash.dump
 mllparty-*.tar
 
 .elixir_ls
+
+.idea

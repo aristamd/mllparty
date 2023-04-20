@@ -36,6 +36,12 @@ if config_env() == :prod do
   api_key = System.get_env("API_KEY") || raise "environment variable API_KEY is missing."
   config :mllparty, api_key: api_key
 
+  slack_webhook_url = System.get_env("SLACK_WEBHOOK_URL")
+  config :mllparty, slack_webhook_url: slack_webhook_url
+
+  slack_channel = System.get_env("SLACK_CHANNEL")
+  config :mllparty, slack_channel: slack_channel
+
   host = System.get_env("PHX_HOST") || "example.com"
   port = String.to_integer(System.get_env("PORT") || "4000")
 
