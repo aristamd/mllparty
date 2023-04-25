@@ -24,7 +24,7 @@ defmodule MLLPartyWeb.ConnectionControllerTest do
     test "with missing API key" do
       resp =
         build_conn()
-        |> get(@api_endpoint, %{})
+        |> get(@api_endpoint)
         |> json_response(401)
 
       assert resp == %{"message" => "Missing API key"}
@@ -34,7 +34,7 @@ defmodule MLLPartyWeb.ConnectionControllerTest do
       resp =
         build_conn()
         |> basic_auth("", "invalid")
-        |> get(@api_endpoint, %{})
+        |> get(@api_endpoint)
         |> json_response(401)
 
       assert resp == %{"message" => "Invalid API key"}
@@ -71,6 +71,37 @@ defmodule MLLPartyWeb.ConnectionControllerTest do
              ]
 
       MLLP.Receiver.stop(6090)
+    end
+  end
+
+  describe "POST #{@api_endpoint}" do
+    test "with missing API key" do
+      resp =
+        build_conn()
+        |> post(@api_endpoint)
+        |> json_response(401)
+
+      assert resp == %{"message" => "Missing API key"}
+    end
+
+    test "with invalid API key" do
+      resp =
+        build_conn()
+        |> basic_auth("", "invalid")
+        |> post(@api_endpoint)
+        |> json_response(401)
+
+      assert resp == %{"message" => "Invalid API key"}
+    end
+
+    test "with invalid endpoint", %{conn: conn} do
+      conn = post(conn, @api_endpoint, %{endpoint: "127.0.0.1"})
+      assert json_response(conn, 400)["message"] == "Invalid `endpoint` param: 127.0.0.1"
+    end
+
+    test "with valid endpoint", %{conn: conn} do
+      conn = post(conn, @api_endpoint, %{endpoint: "127.0.0.1:6901"})
+      assert json_response(conn, 200) == %{"started" => true}
     end
   end
 end

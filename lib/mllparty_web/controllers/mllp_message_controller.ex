@@ -20,7 +20,7 @@ defmodule MLLPartyWeb.MLLPMessageController do
   end
 
   def send(conn, %{"endpoint" => endpoint, "message" => message}) do
-    with {:ok, {ip, port}} <- validate_endpoint(endpoint),
+    with {:ok, {ip, port}} <- Helpers.validate_endpoint(endpoint),
          %HL7.Message{} = hl7_message <- HL7.Message.new(message) do
       # Send message to the endpoint
       resp = MLLParty.ConnectionHub.send_message(ip, port, hl7_message)
@@ -90,19 +90,5 @@ defmodule MLLPartyWeb.MLLPMessageController do
     provided = Map.keys(params)
     missing = (required -- provided) |> Enum.join(", ")
     {:error, :invalid_request, "Missing params: #{missing}"}
-  end
-
-  defp validate_endpoint("mllp://" <> endpoint), do: validate_endpoint(endpoint)
-
-  defp validate_endpoint(endpoint) do
-    with [ip, port] <- String.split(String.trim(endpoint), ":"),
-         {port, _} <- Integer.parse(port),
-         true <- Helpers.valid_ip?(ip),
-         true <- Helpers.valid_port?(port) do
-      {:ok, {ip, port}}
-    else
-      _ ->
-        {:error, :invalid_endpoint}
-    end
   end
 end
