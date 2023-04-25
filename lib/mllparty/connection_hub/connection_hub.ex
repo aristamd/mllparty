@@ -135,7 +135,7 @@ defmodule MLLParty.ConnectionHub do
     Logger.info("Starting boot client connections: #{inspect(boot_clients)}")
 
     for {ip, port} <- boot_clients do
-      {reply, pid} = start_client(ip, port)
+      {_reply, pid} = start_client(ip, port)
       wait_for_client_to_connect(pid)
     end
   end

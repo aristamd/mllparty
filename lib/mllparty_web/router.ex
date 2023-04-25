@@ -12,6 +12,7 @@ defmodule MLLPartyWeb.Router do
     pipe_through :api
 
     get "/connections", ConnectionController, :list
+    post "/connections", ConnectionController, :create
     post "/mllp_messages", MLLPMessageController, :send
   end
 
