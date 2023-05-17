@@ -20,6 +20,18 @@ if System.get_env("PHX_SERVER") do
   config :mllparty, MLLPartyWeb.Endpoint, server: true
 end
 
+boot_connections =
+  System.get_env("BOOT_CONNECTIONS", "")
+  |> String.split(",")
+  |> Enum.map(&String.trim/1)
+  |> Enum.filter(&(&1 not in [nil, ""]))
+  |> Enum.map(fn ip_port ->
+    [ip, port] = String.split(ip_port, ":")
+    {ip, String.to_integer(port)}
+  end)
+
+config :mllparty, boot_connections: boot_connections
+
 if config_env() == :prod do
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you
@@ -56,16 +68,6 @@ if config_env() == :prod do
       port: port
     ],
     secret_key_base: secret_key_base
-
-  boot_connections =
-    System.get_env("BOOT_CONNECTIONS", "")
-    |> String.split(",")
-    |> Enum.map(fn ip_port ->
-      [ip, port] = String.split(ip_port, ":")
-      {ip, String.to_integer(port)}
-    end)
-
-  config :mllparty, boot_connections: boot_connections
 
   config :sentry,
     dsn: System.fetch_env!("SENTRY_DSN"),

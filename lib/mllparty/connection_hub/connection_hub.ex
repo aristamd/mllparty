@@ -131,7 +131,7 @@ defmodule MLLParty.ConnectionHub do
   end
 
   defp start_boot_clients() do
-    boot_clients = Application.get_env(:mllparty, :boot_clients, [])
+    boot_clients = Application.get_env(:mllparty, :boot_connections) || []
     Logger.info("Starting boot client connections: #{inspect(boot_clients)}")
 
     for {ip, port} <- boot_clients do
