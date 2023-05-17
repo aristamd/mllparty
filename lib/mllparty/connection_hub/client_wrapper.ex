@@ -33,7 +33,11 @@ defmodule MLLParty.ConnectionHub.ClientWrapper do
         id: "#{ip}:#{port}",
         start:
           {MLLP.Client, :start_link,
-           [ip, port, [use_backoff: false, auto_reconnect_interval: 1000]]}
+           [
+             ip,
+             port,
+             [use_backoff: false, auto_reconnect_interval: 1000, socket_opts: [keepalive: true]]
+           ]}
       },
       %{
         id: "#{ip}:#{port} monitor",
