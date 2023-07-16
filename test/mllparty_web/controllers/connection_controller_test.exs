@@ -58,15 +58,13 @@ defmodule MLLPartyWeb.ConnectionControllerTest do
                  "endpoint" => "127.0.0.1:6090",
                  "ip" => "127.0.0.1",
                  "port" => 6090,
-                 "connected" => true,
-                 "pending_reconnect" => false
+                 "connected" => true
                },
                %{
                  "endpoint" => "127.0.0.1:6091",
                  "ip" => "127.0.0.1",
                  "port" => 6091,
-                 "connected" => false,
-                 "pending_reconnect" => true
+                 "connected" => false
                }
              ]
 

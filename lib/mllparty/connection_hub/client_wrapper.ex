@@ -69,23 +69,13 @@ defmodule MLLParty.ConnectionHub.ClientWrapper do
       endpoint: endpoint,
       ip: ip,
       port: String.to_integer(port),
-      connected: is_connected?(client_pid),
-      pending_reconnect: is_pending_reconnect?(client_pid)
+      connected: is_connected?(client_pid)
     }
   end
 
   def is_connected?(client_pid) do
     try do
-      MLLP.Client.is_connected?(client_pid) && not MLLP.Client.is_closed?(client_pid)
-    catch
-      :exit, {reason, _} ->
-        {:unavailable, reason}
-    end
-  end
-
-  def is_pending_reconnect?(client_pid) do
-    try do
-      MLLP.Client.is_pending_reconnect?(client_pid)
+      MLLP.Client.is_connected?(client_pid)
     catch
       :exit, {reason, _} ->
         {:unavailable, reason}

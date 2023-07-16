@@ -2,7 +2,7 @@ defmodule MLLParty.ConnectionHub.ClientMonitor do
   use GenServer
 
   @moduledoc """
-    Module to proactively monitor a client's connection and reconnect as necessary
+    Module to proactively monitor a client's connection
     Send slack notification if connection goes down for too long, send another when it comes back up
   """
 
@@ -44,7 +44,6 @@ defmodule MLLParty.ConnectionHub.ClientMonitor do
     %{
       endpoint: endpoint,
       connected: connected,
-      pending_reconnect: pending_reconnect
     } = ClientWrapper.client_status(state.client_wrapper_pid)
 
     # Check the connection status
@@ -56,7 +55,7 @@ defmodule MLLParty.ConnectionHub.ClientMonitor do
 
         false ->
           # Connection is down
-          handle_connection_down(endpoint, connected, pending_reconnect, state)
+          handle_connection_down(endpoint, connected, state)
       end
 
     schedule_monitor()
@@ -81,11 +80,11 @@ defmodule MLLParty.ConnectionHub.ClientMonitor do
       end
     end
 
-    # Reset down_at, down_notification_sent, reconnect_attempted
-    %{down_at: nil, down_notification_sent: false, reconnect_attempted: false}
+    # Reset down_at, down_notification_sent
+    %{down_at: nil, down_notification_sent: false}
   end
 
-  def handle_connection_down(endpoint, connected, pending_reconnect, state) do
+  def handle_connection_down(endpoint, connected, state) do
     # Get current timestamp
     now = DateTime.utc_now()
     # Connection is down
@@ -128,28 +127,6 @@ defmodule MLLParty.ConnectionHub.ClientMonitor do
 
         %{down_at: state.down_at, down_notification_sent: sent}
       end
-
-    # Try to reconnect if the client isn't pending reconnect and we haven't already attempted to reconnect
-    reconnect_attempted =
-      if pending_reconnect == false && state.reconnect_attempted == false do
-        client_pid = ClientWrapper.child_client_pid(state.client_wrapper_pid)
-
-        try do
-          Logger.info("Attempting reconnect for #{endpoint}")
-
-          # This method instructs the client to reconnect using it's configured backoff or auto reconnect interval
-          MLLP.Client.reconnect(client_pid)
-        catch
-          :exit, {reason, _} ->
-            Logger.info("Reconnect attempt failed for #{endpoint} (reason: #{reason})")
-        end
-
-        true
-      else
-        state.reconnect_attempted
-      end
-
-    new_state = Map.merge(new_state, %{reconnect_attempted: reconnect_attempted})
     Map.merge(state, new_state)
   end
 
