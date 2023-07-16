@@ -79,8 +79,7 @@ defmodule MLLParty.ConnectionHub do
           endpoint: "127.0.0.1:6090",
           ip: "127.0.0.1",
           port: "6090",
-          connected: true,
-          pending_reconnect: false
+          connected: true
         }
       ]
   """
