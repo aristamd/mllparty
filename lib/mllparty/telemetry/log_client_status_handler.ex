@@ -5,7 +5,7 @@ defmodule LogClientStatusHandler do
     message =
       case measurements.status do
         :connected -> "Client connected."
-        :disconnected -> "Client disconnected: #{metadata.connect_failure || "(unknown reason)"}"
+        :disconnected -> "Client disconnected: #{metadata.tcp_error || "(unknown reason)"}"
         _ -> "Client status: #{measurements.status}"
       end
 
