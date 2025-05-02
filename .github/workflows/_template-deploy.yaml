@@ -1,0 +1,54 @@
+name: Deploy Template
+
+on:
+  workflow_call:
+    inputs:
+      client_slug:
+        required: true
+        type: string
+        description: "The client slug used for resource naming and environment"
+      image_tag:
+        required: true
+        type: string
+        description: "The image tag to deploy"
+    secrets:
+      AZURE_CREDENTIALS:
+        required: true
+      REGISTRY_LOGIN_SERVER:
+        required: true
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.client_slug }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.client_slug }}
+    env:
+      image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/mllp:${{ inputs.image_tag }}
+    steps:
+      - name: "Checkout GitHub Action"
+        uses: actions/checkout@main
+
+      - name: "Login via Azure CLI"
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Render k8s manifest
+        run: envsubst < deploy_config/aks-deployment-template.yaml > deploy_config/aks-deployment.yaml
+      - name: "Set Azure kubernetes service context"
+        id: set-context
+        uses: azure/aks-set-context@v4
+        with:
+          resource-group: "tenant-${{ inputs.client_slug }}"
+          cluster-name: "${{ inputs.client_slug }}-primary-cluster"
+      - name: "Setup kubectl"
+        id: install-kubectl
+        uses: azure/setup-kubectl@v4
+      - name: "Deploy to Azure Kubernetes Service"
+        id: deploy-aks
+        uses: Azure/k8s-deploy@v5
+        with:
+          namespace: "default"
+          manifests: |
+            deploy_config/aks-service.yaml
+            deploy_config/aks-deployment.yaml

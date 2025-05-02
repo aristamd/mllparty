@@ -1,0 +1,49 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions: write-all
+
+jobs:
+  mixtest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hoverkraft-tech/compose-action@v2.2.0
+      - name: asdf cache
+        id: asdf-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.asdf/
+          key: ${{ runner.os }}-${{ hashFiles('**/.tool-versions') }}
+      - uses: asdf-vm/actions/install@179e9530fcd91100e4621bf7e563e7daa8398c52
+      - name: Cache Mix
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock', '**/.tool-versions') }}
+          restore-keys: |
+            ${{ runner.os }}-mix-${{ hashFiles('**/.tool-versions') }}
+      - name: install hex
+        run: mix local.hex --force
+      - run: mix hex.repo add oban https://repo.oban.pro --fetch-public-key SHA256:4/OSKi0NRF91QVVXlGAhb/BIMLnK8NHcx/EWs+aIWPc --auth-key ${{secrets.OBAN_LICENSE_KEY}}
+      - run: mix deps.get
+      - name: Check warnings
+        run: mix compile --warnings-as-errors
+      - name: Run tests
+        run: mix test
+      - name: Create schema graph document
+        if: github.ref != 'refs/heads/main'
+        run: make generate_schema_pr
+      - name: PR comment with file
+        uses: thollander/actions-comment-pull-request@v2
+        if: github.ref != 'refs/heads/main'
+        with:
+          filePath: ./tmp/schema.md
+          comment_tag: schema

@@ -1,0 +1,34 @@
+name: Staging Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Target environment to deploy to"
+        required: true
+        type: choice
+        options:
+          - staging
+
+jobs:
+  build:
+    uses: ./.github/workflows/_template-build.yaml
+    secrets:
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+      REGISTRY_LOGIN_SERVER: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+
+  # deploy-staging:
+  #   if: github.event_name == 'push' || github.event.inputs.target == 'staging'
+  #   needs: build
+  #   uses: ./.github/workflows/_template-deploy.yaml
+  #   with:
+  #     client_slug: "staging"
+  #     image_tag: ${{ github.sha }}
+  #   secrets:
+  #     AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+  #     REGISTRY_LOGIN_SERVER: ${{ secrets.REGISTRY_LOGIN_SERVER }}

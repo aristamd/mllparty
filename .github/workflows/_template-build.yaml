@@ -1,0 +1,51 @@
+name: Build Template
+
+on:
+  workflow_call:
+    secrets:
+      AZURE_CREDENTIALS:
+        required: true
+      REGISTRY_LOGIN_SERVER:
+        required: true
+      REGISTRY_USERNAME:
+        required: true
+      REGISTRY_PASSWORD:
+        required: true
+
+jobs:
+  build-image:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.set_image_tag.outputs.image_tag }}
+    steps:
+      - name: "Checkout GitHub Action"
+        uses: actions/checkout@main
+
+      - name: "Login via Azure CLI"
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+
+      - name: "Build and push image"
+        uses: azure/docker-login@v2
+        with:
+          login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - run: |
+          docker buildx build \
+            --cache-from type=registry,ref=${{ secrets.REGISTRY_LOGIN_SERVER }}/client-api:buildcache \
+            --cache-to type=inline \
+            --secret id=oban_auth_key,env=OBAN_LICENSE_KEY \
+            --push \
+            . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/mllparty:${{ github.sha }}
+      - name: "Set image tag"
+        id: set_image_tag
+        run: |
+          echo "image_tag=${{ secrets.REGISTRY_LOGIN_SERVER }}/mllparty:${{ github.sha }}" >> $GITHUB_OUTPUT
